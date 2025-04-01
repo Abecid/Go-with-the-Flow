@@ -4,3 +4,7 @@ code_release/.nfs000000000322527c00009703
 
 .vscode
 rp
+
+cooking_output
+noise_warp_cooking_output
+*.mp4
