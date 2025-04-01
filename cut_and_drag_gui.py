@@ -1,13 +1,27 @@
 from rp import *
+import matplotlib
+matplotlib.use("TkAgg") 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider
 from matplotlib.patches import Polygon as Polygon
+import argparse
+
 import cv2
 git_import('CommonSource')
 import rp.git.CommonSource.noise_warp as nw
 from easydict import EasyDict
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Make GUI')
+    parser.add_argument('--image_path', type=str, default='assets/cooking.png', help='Path to Image')
+    parser.add_argument('--prompt', type=str, default='Cooking', help='Prompt for the motion')
+    parser.add_argument('--num_layers', type=int, default=1, help='Number of layers')
+    
+    args = parser.parse_args()
+
+    return args
 
 def select_polygon(image):
     fig, ax = plt.subplots()
@@ -163,7 +177,7 @@ def select_path(image, polygon, num_frames=49):
     return path, scales, rotations
 
 
-def animate_polygon(image, polygon, path, scales, rotations,interp=cv2.INTER_LINEAR):
+def animate_polygon(image, polygon, path, scales, rotations, interp=cv2.INTER_LINEAR):
     frames = []
     transformed_polygons = []
     origin = np.array(path[0])
@@ -247,12 +261,15 @@ def apply_transformation(polygon, scale, rotation, origin):
 
 
 if __name__ == "__main__":
+    args = parse_args()
+
     fansi_print(big_ascii_text("Go With The Flow!"), "yellow green", "bold")
 
-    image_path = input_conditional(
-        fansi("First Frame: Enter Image Path or URL", "blue cyan", "italic bold underlined"),
-        lambda x: is_a_file(x.strip()) or is_valid_url(x.strip()),
-    ).strip()
+    # image_path = input_conditional(
+    #     fansi("First Frame: Enter Image Path or URL", "blue cyan", "italic bold underlined"),
+    #     lambda x: is_a_file(x.strip()) or is_valid_url(x.strip()),
+    # ).strip()
+    image_path = args.image_path
 
     print("Using path: " + fansi_highlight_path(image_path))
     if is_video_file(image_path):
@@ -263,7 +280,8 @@ if __name__ == "__main__":
         image = resize_image_to_fit(image, height=1440, allow_growth=False)
 
     rp.fansi_print("PRO TIP: Use this website to help write your captions: https://huggingface.co/spaces/THUDM/CogVideoX-5B-Space", 'blue cyan')
-    prompt=input(fansi('Input the video caption >>> ','blue cyan','bold'))
+    # prompt=input(fansi('Input the video caption >>> ','blue cyan','bold'))
+    prompt = args.prompt
 
     SCALE_FACTOR=1
     #Adjust resolution to 720x480: resize then center-crop
@@ -271,20 +289,25 @@ if __name__ == "__main__":
     WIDTH=720*SCALE_FACTOR
     image = resize_image_to_hold(image,height=HEIGHT,width=WIDTH) 
     image = crop_image(image, height=HEIGHT,width=WIDTH, origin='center')
-    title = input_default(
-        fansi("Enter a title: ", "blue cyan", "italic bold underlined"),
-        get_file_name(
+    # title = input_default(
+    #     fansi("Enter a title: ", "blue cyan", "italic bold underlined"),
+    #     get_file_name(
+    #         image_path,
+    #         include_file_extension=False,
+    #     ),
+    # )
+    title = get_file_name(
             image_path,
             include_file_extension=False,
-        ),
-    )
+        )
     output_folder=make_directory(get_unique_copy_path(title))
     print("Output folder: " + fansi_highlight_path(output_folder))
 
     fansi_print("How many layers?", "blue cyan", "italic bold underlined"),
-    num_layers = input_integer(
-        minimum=1,
-    )
+    # num_layers = input_integer(
+    #     minimum=1,
+    # )
+    num_layers = args.num_layers
 
     layer_videos = []
     layer_polygons = []
